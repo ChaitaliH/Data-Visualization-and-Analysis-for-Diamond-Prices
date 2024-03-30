@@ -1,0 +1,175 @@
+---
+title: "Project Diamond"
+author: "Dana Korotovskikh"
+date: "2023-06-26"
+output: html_document
+---
+
+Read in data and libraries:
+```{r, echo=FALSE, include=FALSE}
+library(dplyr)
+library(tidyverse)
+```
+
+```{r}
+diamond = read_csv("C:\\Users\\home\\Desktop\\DS MASTERS\\STAT 6021 Linear Models for Data Science\\Project1\\diamonds4.csv")
+```
+
+
+**Diamond Plots:**
+```{r, echo=FALSE, message=FALSE}
+diamond <- diamond %>% 
+  mutate(cut = cut %>% 
+           fct_relevel(c("Astor Ideal", "Ideal", "Very Good", "Good")))
+```
+
+```{r, echo=FALSE, message=FALSE}
+ggplot2::ggplot(diamond, aes(x=carat,y=price))+
+geom_point()+
+geom_smooth(method = "lm", se=FALSE)+
+labs(x="Carat", y="Price", title="Price per Carat")
+```
+```{r, echo=FALSE, message=FALSE}
+ggplot2::ggplot(diamond, aes(x=carat,y=price, color=cut))+
+geom_point()+
+labs(x="Carat", y="Price", title="Price per Carat w/ Cut")
+```
+
+```{r, echo=FALSE, message=FALSE}
+ggplot2::ggplot(diamond, aes(x=carat,y=price, color=clarity))+
+geom_point()+
+labs(x="Carat", y="Price", title="Price per Carat w/ Clarity")
+```
+
+From the simple linear regression plot, we can say that the variables "Carat Weight" and "Prices" are correlated to each other. There is a pattern of increasing price, with increasing carat. 
+Cut is also relevant to the pricing, but it seems that the carat weight is more important than the cut from above plots. However, when plotting the clarity with the price, there doesn't appear to be any clear relationship between clarity and price.
+
+
+**Boxplots to Show Relationships:**
+```{r, echo=FALSE}
+ggplot(diamond, aes(x=color, y=price))+
+  geom_boxplot(outlier.shape=NA)+
+  coord_cartesian(ylim = c(0, 14000))+
+  labs(x="Diamond Color", y="Price", title= "Diamond Color v. Price Boxplots (outliers removed)")
+```
+
+To analyse the pricing for diamond according to the diamond colors, we made a box plot. 
+And we can say that all diamons colors have similar average pricing. So the color variable doesn't influence the price.
+
+```{r, echo=FALSE}
+ggplot(diamond, aes(x=cut, y=price))+
+  geom_boxplot(outlier.shape=NA)+
+  coord_cartesian(ylim = c(0, 14000))+
+  labs(x="Diamond Cut", y="Price", title= "Diamond Cut v. Price Boxplots (outliers removed)")
+```
+
+Here we chose box plot to show the spread of the values for the diamond color and cut. 
+Looking at above box-plot, we conclude that diamond cuts add more value in Diamond pricing than other variables.
+Here, "Astor Ideal" has the greatest mean and the spread over prices is much higher compared to other cuts.
+
+```{r, echo=FALSE}
+ggplot(diamond, aes(x=clarity, y=price))+
+  geom_boxplot()+
+  #coord_cartesian(ylim = c(0, 30000))+
+  labs(x="Diamond Clarity", y="Price", title= "Diamond Clarity v. Price Boxplots")
+```
+
+It's important to note that the "FL" category of diamond clarity only has three instances of diamond associated with it, so the data is potentially skewed because of the small sample size.
+
+```{r}
+ggplot(diamond, aes(x=cut, y=price, color=clarity))+
+  geom_boxplot(outlier.shape=NA)+
+  coord_cartesian(ylim = c(0, 15000))+
+  labs(x="Diamond Cut", y="Price", title= "Diamond Cut & Clarity v. Price Boxplots (outliers removed)")
+```
+
+Note that for the "Very Good" category of Cut, the "FL" category of clarity is barely visible - this is because the boxplot was so large it would not fit in with the rest of the data.
+
+
+**Barplots for Price and clarity:**
+```{r, echo=FALSE}
+ggplot(diamond, aes(x=clarity, y=price))+
+  geom_bar(position="dodge", stat="summary", fun="mean")+
+  labs(x="Clarity groups", y="Price", title="Mean Prices by clarity group")
+```
+
+```{r, echo=FALSE}
+ggplot(diamond, aes(x=clarity, y=price))+
+  geom_bar(position="dodge", stat="summary", fun="median")+
+  labs(x="Clarity groups", y="Price", title="Median Prices by clarity group")
+```
+
+To vizualize the data in terms of average prices agains clarity, we calculated the mean prices for each clarity group and plotted a bar graph. So, from the bar plot of mean prices against clarity groups we can say that, clarity FL has highest price over other clarity groups. And all other clarity groups have around similar average pricing. Also, from the bar chart with median prices against clarity group, we can say that FL has high pricing over other clarity groups.
+
+Conclusion: Looking at all the data visualization for price against different variables, diamond cuts are most likedly to influence the diamond price.
+
+**Section 3: SLR**
+
+**Linear Model no transformations:**
+```{r}
+result = lm(price~carat, data = diamond)
+result
+summary(result)
+```
+
+Scatterplot and Cox Box plot: 
+```{r}
+ggplot2::ggplot(diamond, aes(x=carat,y=price))+
+geom_point()+
+geom_smooth(method = "lm", se=FALSE)+
+labs(x="Carat ", y="Price",
+title="Scatterplot of Carat against Price")
+
+MASS::boxcox(result, lambda = seq(-0.5, 0.5, 1/10))
+
+```
+
+Residual Plot:
+```{r}
+result<-lm(price~carat, data = diamond)
+par(mfrow = c(2, 2))
+plot(result)
+```
+
+**Linear Model with log of response:**
+```{r}
+diamond$price.log = log(diamond$price)
+
+ggplot2::ggplot(diamond, aes(x=carat,y=price.log))+
+geom_point()+
+geom_smooth(method = "lm", se=FALSE)+
+labs(x="Carat ", y="Log of Price",
+title="Scatterplot of Carat against Log of Price")
+```
+
+Residual plot:
+```{r}
+result2<-lm(price.log~carat, data = diamond)
+par(mfrow = c(2, 2))
+plot(result2)
+```
+
+
+**Linear Model with log of response and predictor:**
+```{r}
+diamond$carat.log = log(diamond$carat)
+ggplot2::ggplot(diamond, aes(x=carat.log,y=price.log))+
+geom_point()+
+geom_smooth(method = "lm", se=FALSE)+
+labs(x="Log of Carat ", y="Log of Price",
+title="Scatterplot of Log of Carat against Log of Price")
+
+```
+
+Residual Plot:
+```{r}
+result3<-lm(price.log~carat.log, data = diamond)
+par(mfrow = c(2, 2))
+plot(result3)
+```
+
+Summary of Final Model:
+```{r}
+summary(result3)
+```
+
